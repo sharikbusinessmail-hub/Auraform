@@ -3,7 +3,7 @@ import { Star, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { api, type Product, CATEGORY_LABELS, FINISH_LABELS } from "../../lib/api";
 
 interface Props {
-  filter: { category?: string } | null;
+  filter: { category?: string; search?: string } | null;
   onOpen: (p: Product) => void;
 }
 
@@ -111,18 +111,57 @@ export function ProductGrid({ filter, onOpen }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError(null);
-    api.getProducts(filter?.category ? { category: filter.category } : undefined)
-      .then(setAllProducts)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [filter?.category]);
+    // When searching we fetch everything and filter client-side.
+    const params = filter?.category && !filter?.search ? { category: filter.category } : undefined;
+
+    (async () => {
+      try {
+        let data = await api.getProducts(params);
+        // Auto-seed on first load if the catalog is completely empty.
+        if (data.length === 0 && !params) {
+          try {
+            await api.initDb();
+            data = await api.getProducts(params);
+          } catch {
+            /* init unavailable — leave empty */
+          }
+        }
+        if (!cancelled) setAllProducts(data);
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [filter?.category, filter?.search]);
 
   const topSelling = useMemo(() => allProducts.filter((p) => p.topSelling), [allProducts]);
-  const displayItems = filter ? allProducts : (tab === "featured" ? allProducts : topSelling);
 
-  const sectionLabel = filter?.category ? (CATEGORY_LABELS[filter.category] ?? filter.category) : null;
+  const searchResults = useMemo(() => {
+    if (!filter?.search) return allProducts;
+    const q = filter.search.toLowerCase();
+    return allProducts.filter((p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      (CATEGORY_LABELS[p.category] ?? "").toLowerCase().includes(q)
+    );
+  }, [allProducts, filter?.search]);
+
+  const displayItems = filter
+    ? (filter.search ? searchResults : allProducts)
+    : (tab === "featured" ? allProducts : topSelling);
+
+  const sectionLabel = filter?.search
+    ? `Results for “${filter.search}”`
+    : filter?.category
+      ? (CATEGORY_LABELS[filter.category] ?? filter.category)
+      : null;
 
   return (
     <section className="bg-white py-20">
@@ -189,7 +228,7 @@ export function ProductGrid({ filter, onOpen }: Props) {
             <RefreshCw size={32} className="mx-auto mb-4 text-muted-foreground/30" />
             <div className="text-[16px]">No products found</div>
             <div className="mt-1 text-[13px]">
-              {filter ? "Try a different category." : "Add products in the admin panel."}
+              {filter?.search ? "Try a different search term." : filter ? "Try a different category." : "Add products in the admin panel."}
             </div>
           </div>
         ) : (

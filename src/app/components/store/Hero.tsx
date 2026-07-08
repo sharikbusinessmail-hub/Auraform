@@ -4,18 +4,33 @@ import { ArrowRight } from "lucide-react";
 interface Props {
   onNavigate: (filter: { category?: string } | null) => void;
   onCustomOrder: () => void;
+  onShopAll: () => void;
 }
 
-const slides = [
+type Action =
+  | { kind: "shop-all" }
+  | { kind: "custom" }
+  | { kind: "category"; category: string };
+
+const slides: {
+  src: string;
+  badge: string;
+  title: string;
+  body: string;
+  primaryLabel: string;
+  primary: Action;
+  secondaryLabel: string;
+  secondary: Action;
+}[] = [
   {
     src: "https://images.unsplash.com/photo-1776736851933-4a2ece025ec5?w=1800&h=1100&fit=crop&auto=format",
     badge: "New Arrivals · July 2026",
     title: "Bring your world to life — one layer at a time.",
     body: "Premium 3D printed home decor, figurines, and custom pieces. Made in Sri Lanka.",
     primaryLabel: "Shop Collection",
-    primaryAction: null as { category?: string } | null,
+    primary: { kind: "shop-all" },
     secondaryLabel: "Custom Order",
-    secondaryIsCustom: true,
+    secondary: { kind: "custom" },
   },
   {
     src: "https://images.unsplash.com/photo-1730267252256-67bee55353e8?w=1800&h=1100&fit=crop&auto=format",
@@ -23,9 +38,9 @@ const slides = [
     title: "Geometric planters that grow with your space.",
     body: "Matte PLA, silk finishes, and resin — printed to order or ready to ship island-wide.",
     primaryLabel: "View Pots & Planters",
-    primaryAction: { category: "pots" },
+    primary: { kind: "category", category: "pots" },
     secondaryLabel: "All Home Decors",
-    secondaryIsCustom: false,
+    secondary: { kind: "shop-all" },
   },
   {
     src: "https://images.unsplash.com/photo-1515155075601-23009d0cb6d4?w=1800&h=1100&fit=crop&auto=format",
@@ -33,13 +48,13 @@ const slides = [
     title: "Your vision. Our printers. One perfect piece.",
     body: "Send us a sketch, photo, or idea — we model it, print it, and deliver to your door.",
     primaryLabel: "Start a Custom Order",
-    primaryAction: null,
+    primary: { kind: "custom" },
     secondaryLabel: "View Gallery",
-    secondaryIsCustom: false,
+    secondary: { kind: "shop-all" },
   },
 ];
 
-export function Hero({ onNavigate, onCustomOrder }: Props) {
+export function Hero({ onNavigate, onCustomOrder, onShopAll }: Props) {
   const [i, setI] = useState(0);
 
   useEffect(() => {
@@ -48,25 +63,15 @@ export function Hero({ onNavigate, onCustomOrder }: Props) {
   }, []);
 
   const s = slides[i];
-  const isPrimaryCustom = i === 2 || (i === 0 && s.secondaryIsCustom && !s.primaryAction);
 
-  const handlePrimary = () => {
-    if (i === 2 || isPrimaryCustom) {
-      onCustomOrder();
-    } else {
-      onNavigate(s.primaryAction);
-    }
+  const runAction = (a: Action) => {
+    if (a.kind === "custom") onCustomOrder();
+    else if (a.kind === "shop-all") onShopAll();
+    else onNavigate({ category: a.category });
   };
 
-  const handleSecondary = () => {
-    if (s.secondaryIsCustom) {
-      onCustomOrder();
-    } else if (i === 1) {
-      onNavigate({ category: "pots" });
-    } else {
-      onNavigate(null);
-    }
-  };
+  const handlePrimary = () => runAction(s.primary);
+  const handleSecondary = () => runAction(s.secondary);
 
   return (
     <section className="relative h-[88vh] min-h-[520px] overflow-hidden bg-secondary">

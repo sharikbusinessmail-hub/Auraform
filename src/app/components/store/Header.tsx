@@ -4,10 +4,11 @@ import { CATEGORY_LABELS } from "../../lib/api";
 
 interface HeaderProps {
   cartCount: number;
-  onNavigate: (filter: { category?: string } | null) => void;
+  onNavigate: (filter: { category?: string; search?: string } | null) => void;
   onEnterAdmin: () => void;
   onOpenCart: () => void;
   onCustomOrder: () => void;
+  onSearch: (term: string) => void;
 }
 
 const megaMenu = [
@@ -45,13 +46,23 @@ const megaMenu = [
   },
 ];
 
-export function Header({ cartCount, onNavigate, onEnterAdmin, onOpenCart, onCustomOrder }: HeaderProps) {
+export function Header({ cartCount, onNavigate, onEnterAdmin, onOpenCart, onCustomOrder, onSearch }: HeaderProps) {
   const [open, setOpen] = useState<number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [term, setTerm] = useState("");
 
   const handleCategory = (key: string) => {
     onNavigate({ category: key });
     setOpen(null);
+    setMobileOpen(false);
+  };
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!term.trim()) return;
+    onSearch(term);
+    setSearchOpen(false);
     setMobileOpen(false);
   };
 
@@ -103,9 +114,38 @@ export function Header({ cartCount, onNavigate, onEnterAdmin, onOpenCart, onCust
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <button className="hidden text-muted-foreground transition hover:text-foreground md:block">
-            <Search size={18} />
-          </button>
+          {/* Search (desktop) */}
+          <div className="hidden items-center md:flex">
+            {searchOpen ? (
+              <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5">
+                <Search size={15} className="text-muted-foreground" />
+                <input
+                  autoFocus
+                  value={term}
+                  onChange={(e) => setTerm(e.target.value)}
+                  placeholder="Search products…"
+                  className="w-44 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/60"
+                  style={{ fontFamily: "var(--font-body)" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => { setSearchOpen(false); setTerm(""); }}
+                  className="text-muted-foreground transition hover:text-foreground"
+                  aria-label="Close search"
+                >
+                  <X size={15} />
+                </button>
+              </form>
+            ) : (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="text-muted-foreground transition hover:text-foreground"
+                aria-label="Search"
+              >
+                <Search size={18} />
+              </button>
+            )}
+          </div>
           <button onClick={onEnterAdmin} className="hidden text-muted-foreground transition hover:text-foreground md:block" title="Admin">
             <User size={18} />
           </button>
@@ -234,6 +274,15 @@ export function Header({ cartCount, onNavigate, onEnterAdmin, onOpenCart, onCust
       {mobileOpen && (
         <div className="border-t border-border bg-white px-6 py-6 md:hidden" style={{ fontFamily: "var(--font-body)" }}>
           <div className="space-y-5">
+            <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2.5">
+              <Search size={16} className="text-muted-foreground" />
+              <input
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder="Search products…"
+                className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground/60"
+              />
+            </form>
             <button onClick={() => { onNavigate(null); setMobileOpen(false); }} className="block text-[15px] font-medium text-foreground">
               Home
             </button>

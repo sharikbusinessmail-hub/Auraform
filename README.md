@@ -1,7 +1,7 @@
 
-  # E-commerce platform prototype
+  # Auraform.lk
 
-  This is a code bundle for E-commerce platform prototype. The original project is available at https://www.figma.com/design/OpHhXdkWbq3i2VPHYIXfj8/E-commerce-platform-prototype.
+  This is a code bundle for Auraform.lk. The original project is available at https://www.figma.com/design/OpHhXdkWbq3i2VPHYIXfj8/Auraform.lk.
 
   ## Running the code
 

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Settings } from "lucide-react";
 import { Header } from "./components/store/Header";
 import { Hero } from "./components/store/Hero";
 import { ProductGrid } from "./components/store/ProductGrid";
@@ -7,11 +6,13 @@ import { ProductPage } from "./components/store/ProductPage";
 import { CartDrawer } from "./components/store/CartDrawer";
 import { CustomOrderPage } from "./components/store/CustomOrderPage";
 import { ModelingServices } from "./components/store/ModelingServices";
+import { FloatingActions } from "./components/store/FloatingActions";
 import { AdminAuth } from "./components/admin/AdminAuth";
 import { AdminShell } from "./components/admin/AdminShell";
 import { type CartItem } from "./lib/api";
 
 type View = "store" | "admin-auth" | "admin" | "custom-order";
+type Filter = { category?: string; search?: string };
 
 const STORAGE_KEY = "auraform_cart_v1";
 
@@ -32,7 +33,7 @@ function saveCart(items: CartItem[]) {
 
 export default function App() {
   const [view, setView] = useState<View>("store");
-  const [filter, setFilter] = useState<{ category?: string } | null>(null);
+  const [filter, setFilter] = useState<Filter | null>(null);
   const [activeProduct, setActiveProduct] = useState<import("./lib/api").Product | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>(loadCart);
   const [cartOpen, setCartOpen] = useState(false);
@@ -81,7 +82,7 @@ export default function App() {
 
   const clearCart = () => setCartItems([]);
 
-  const handleNavigate = (f: { category?: string } | null) => {
+  const handleNavigate = (f: Filter | null) => {
     setFilter(f);
     setActiveProduct(null);
     setView("store");
@@ -90,6 +91,18 @@ export default function App() {
     } else if (f === null) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  };
+
+  const handleSearch = (term: string) => {
+    const t = term.trim();
+    handleNavigate(t ? { search: t } : null);
+  };
+
+  const handleShopAll = () => {
+    setFilter(null);
+    setActiveProduct(null);
+    setView("store");
+    setTimeout(() => productsRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
   };
 
   const handleCustomOrder = () => {
@@ -113,6 +126,7 @@ export default function App() {
           onEnterAdmin={() => setView("admin-auth")}
           onOpenCart={() => setCartOpen(true)}
           onCustomOrder={handleCustomOrder}
+          onSearch={handleSearch}
         />
         <CustomOrderPage onBack={() => setView("store")} />
         <CartDrawer
@@ -135,10 +149,11 @@ export default function App() {
         onEnterAdmin={() => setView("admin-auth")}
         onOpenCart={() => setCartOpen(true)}
         onCustomOrder={handleCustomOrder}
+        onSearch={handleSearch}
       />
 
       {!filter && (
-        <Hero onNavigate={handleNavigate} onCustomOrder={handleCustomOrder} />
+        <Hero onNavigate={handleNavigate} onCustomOrder={handleCustomOrder} onShopAll={handleShopAll} />
       )}
 
       {/* Trust bar */}
@@ -270,15 +285,8 @@ export default function App() {
         onClear={clearCart}
       />
 
-      {/* Floating Admin Button */}
-      <button
-        onClick={() => setView("admin-auth")}
-        title="Admin Panel"
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-white shadow-lg transition hover:bg-accent hover:scale-110"
-        style={{ fontFamily: "var(--font-body)" }}
-      >
-        <Settings size={18} />
-      </button>
+      {/* Floating social buttons */}
+      <FloatingActions />
     </div>
   );
 }
