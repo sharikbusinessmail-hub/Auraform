@@ -1,8 +1,17 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
-// Change this to your WhatsApp Business number (country code + number, no +)
-export const WHATSAPP_NUMBER = "94771234567";
+// Change this to your WhatsApp Business number or set VITE_WHATSAPP_NUMBER in Vercel
+export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "94771234567";
 
-const API = "/make-server-84218427";
+// Use absolute URL from environment variables to prevent Vercel 404 routing errors
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ezbutwwaummegowbxwcr.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const API = `${SUPABASE_URL}/functions/v1/make-server-84218427`;
+
+// Helper for authorized headers
+const authHeaders = {
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type ProductType = "pre-printed" | "pod";
@@ -85,10 +94,14 @@ const toDb = (p: Partial<Product> & Record<string, unknown>) => ({
 // ─── API Calls ────────────────────────────────────────────────────────────────
 export const api = {
   async getProducts(params?: { category?: string; topSelling?: boolean }): Promise<Product[]> {
-    const url = new URL(`${window.location.origin}${API}/products`);
+    const url = new URL(`${API}/products`);
     if (params?.category) url.searchParams.set("category", params.category);
     if (params?.topSelling) url.searchParams.set("top_selling", "true");
-    const res = await fetch(url.toString());
+    
+    const res = await fetch(url.toString(), {
+      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
     if (!Array.isArray(data)) throw new Error(data.error ?? "Failed to load products");
@@ -96,7 +109,9 @@ export const api = {
   },
 
   async getProduct(id: string): Promise<Product> {
-    const res = await fetch(`${API}/products/${id}`);
+    const res = await fetch(`${API}/products/${id}`, {
+      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    });
     if (!res.ok) throw new Error("Product not found");
     return mapProduct(await res.json());
   },
@@ -104,7 +119,7 @@ export const api = {
   async createProduct(p: Omit<Product, "id" | "createdAt">): Promise<Product> {
     const res = await fetch(`${API}/products`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify(toDb(p as any)),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -114,7 +129,7 @@ export const api = {
   async updateProduct(id: string, p: Partial<Product>): Promise<Product> {
     const res = await fetch(`${API}/products/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify(toDb(p as any)),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -122,14 +137,17 @@ export const api = {
   },
 
   async deleteProduct(id: string): Promise<void> {
-    const res = await fetch(`${API}/products/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API}/products/${id}`, { 
+      method: "DELETE",
+      headers: authHeaders 
+    });
     if (!res.ok) throw new Error(await res.text());
   },
 
   async getUploadUrl(filename: string): Promise<{ signedUrl: string; path: string; publicUrl: string }> {
     const res = await fetch(`${API}/upload-url`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ filename }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -137,6 +155,7 @@ export const api = {
   },
 
   async uploadFile(signedUrl: string, file: File): Promise<void> {
+    // Note: Signed URLs usually do not require the Auth header since the signature is embedded in the URL
     const res = await fetch(signedUrl, {
       method: "PUT",
       headers: { "Content-Type": file.type },
@@ -148,7 +167,7 @@ export const api = {
   async getCustomOrderUploadUrl(filename: string): Promise<{ signedUrl: string; path: string }> {
     const res = await fetch(`${API}/custom-order-url`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ filename }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -156,12 +175,16 @@ export const api = {
   },
 
   async initDb(): Promise<{ success: boolean; message: string; sql?: string; sqlEditorUrl?: string }> {
-    const res = await fetch(`${API}/init-db`);
+    const res = await fetch(`${API}/init-db`, {
+      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    });
     return res.json();
   },
 
   async seedProducts(): Promise<{ success: boolean; count?: number; message?: string; error?: string }> {
-    const res = await fetch(`${API}/seed`);
+    const res = await fetch(`${API}/seed`, {
+      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    });
     return res.json();
   },
 };
