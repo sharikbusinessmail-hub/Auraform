@@ -1,8 +1,10 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
-// Change this to your WhatsApp Business number (country code + number, no +)
-export const WHATSAPP_NUMBER = "94771234567";
+// Change this to your WhatsApp Business number or set VITE_WHATSAPP_NUMBER in Vercel
+export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "94771234567";
 
-const API = "/make-server-84218427";
+// Use absolute URL from environment variables to prevent Vercel 404 routing errors
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ezbutwwaummegowbxwcr.supabase.co";
+const API = `${SUPABASE_URL}/functions/v1/make-server-84218427`;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type ProductType = "pre-printed" | "pod";
@@ -85,7 +87,7 @@ const toDb = (p: Partial<Product> & Record<string, unknown>) => ({
 // ─── API Calls ────────────────────────────────────────────────────────────────
 export const api = {
   async getProducts(params?: { category?: string; topSelling?: boolean }): Promise<Product[]> {
-    const url = new URL(`${window.location.origin}${API}/products`);
+    const url = new URL(`${API}/products`);
     if (params?.category) url.searchParams.set("category", params.category);
     if (params?.topSelling) url.searchParams.set("top_selling", "true");
     const res = await fetch(url.toString());
