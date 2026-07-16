@@ -255,13 +255,6 @@ export default function App() {
             <span className="font-mono text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>
               © 2026 auraform.lk · All rights reserved
             </span>
-            <button
-              onClick={() => setView("admin-auth")}
-              className="font-mono text-[11px] text-muted-foreground transition hover:text-accent"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Studio console
-            </button>
           </div>
         </div>
       </footer>
