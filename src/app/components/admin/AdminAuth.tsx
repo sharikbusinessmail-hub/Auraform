@@ -1,10 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "../../lib/api";
 
 export function AdminAuth({ onEnter, onBack }: { onEnter: () => void; onBack: () => void }) {
-  const [email, setEmail] = useState("studio@auraform.lk");
+  const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Auto-login if a valid Supabase session already exists
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        onEnter();
+      }
+    });
+  }, [onEnter]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErr(null);
+
+    // This strictly asks Supabase to verify the credentials.
+    // Fake passwords will immediately fail here.
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pw,
+    });
+
+    if (error) {
+      setErr("Invalid login credentials."); // Shows error if fake email/password is used
+    } else {
+      onEnter(); // Only lets you in if Supabase says "Success"
+    }
+    
+    setLoading(false);
+  };
 
   return (
     <div className="grid min-h-screen grid-cols-1 bg-white lg:grid-cols-[1fr_1fr]">
@@ -42,19 +74,14 @@ export function AdminAuth({ onEnter, onBack }: { onEnter: () => void; onBack: ()
             Sign in.
           </h1>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (pw.length < 4) { setErr("Enter any 4+ character password for the prototype."); return; }
-              onEnter();
-            }}
-            className="mt-12 space-y-6"
-          >
+          <form onSubmit={handleLogin} className="mt-12 space-y-6">
             <div>
               <label className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground" style={{ fontFamily: "var(--font-body)" }}>
-                Email
+                Admin Email
               </label>
               <input
+                type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-2 w-full border-b border-border bg-transparent py-3 text-[15px] text-foreground outline-none focus:border-accent"
@@ -67,6 +94,7 @@ export function AdminAuth({ onEnter, onBack }: { onEnter: () => void; onBack: ()
               </label>
               <input
                 type="password"
+                required
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 className="mt-2 w-full border-b border-border bg-transparent py-3 text-[15px] text-foreground outline-none focus:border-accent"
@@ -74,19 +102,20 @@ export function AdminAuth({ onEnter, onBack }: { onEnter: () => void; onBack: ()
               />
             </div>
             {err && (
-              <div className="text-[12px] text-accent" style={{ fontFamily: "var(--font-body)" }}>{err}</div>
+              <div className="text-[12px] text-red-500" style={{ fontFamily: "var(--font-body)" }}>{err}</div>
             )}
             <button
               type="submit"
-              className="mt-4 w-full rounded-[3px] bg-accent py-4 text-[12px] uppercase tracking-[0.24em] text-white transition hover:bg-accent/90"
+              disabled={loading}
+              className="mt-4 w-full rounded-[3px] bg-accent py-4 text-[12px] uppercase tracking-[0.24em] text-white transition hover:bg-accent/90 disabled:opacity-50"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Enter the studio
+              {loading ? "Authenticating..." : "Enter the studio"}
             </button>
           </form>
 
           <div className="mt-8 font-mono text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>
-            Prototype auth · wire to Supabase for production.
+            Secure Supabase authentication active.
           </div>
         </div>
       </div>
