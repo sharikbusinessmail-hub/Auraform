@@ -146,9 +146,6 @@ export function Header({ cartCount, onNavigate, onEnterAdmin, onOpenCart, onCust
               </button>
             )}
           </div>
-          <button onClick={onEnterAdmin} className="hidden text-muted-foreground transition hover:text-foreground md:block" title="Admin">
-            <User size={18} />
-          </button>
           <button onClick={onOpenCart} className="relative text-foreground">
             <ShoppingBag size={18} />
             {cartCount > 0 && (
