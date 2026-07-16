@@ -35,7 +35,7 @@ const megaMenu = [
     imageAlt: "3D printed action figure",
   },
   {
-    label: "3D Print",
+    label: "3D Printers",
     subs: [
       { key: "filament", label: "Filament" },
       { key: "nozzles", label: "Nozzles" },
@@ -43,6 +43,16 @@ const megaMenu = [
     ],
     image: "https://images.unsplash.com/photo-1644936580583-91eb0c32c3db?w=600&h=380&fit=crop&auto=format",
     imageAlt: "3D printing in progress",
+  },
+  {
+    label: "Gifts",
+    subs: [
+      { key: "Key Tags", label: "Key Tags" },
+      { key: "Lithophane Lamps", label: "Lithophane Lamps" },
+      { key: "Toys", label: "Toys" },
+    ],
+    image: "https://ezbutwwaummegowbxwcr.supabase.co/storage/v1/object/public/product-images/images%20(2).jpg",
+    imageAlt: "3D printed key tags",
   },
 ];
 

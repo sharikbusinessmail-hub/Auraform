@@ -229,7 +229,7 @@ function AppContent() {
                   <div className="grid grid-cols-2 gap-x-16 gap-y-3">
                     {[
                       { label: "Home Decors", action: () => handleNavigate({ category: "pots" }) },
-                      { label: "About Us", action: () => {} },
+                      { label: "Key Tags", action: () => handleNavigate({ category: "key-tags" }) }, // <-- Added here
                       { label: "Figurines", action: () => handleNavigate({ category: "action-figures" }) },
                       { label: "Custom Orders", action: handleCustomOrder },
                       { label: "3D Modeling", action: handleCustomOrder },
