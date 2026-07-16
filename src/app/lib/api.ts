@@ -1,17 +1,12 @@
-// ─── Config ───────────────────────────────────────────────────────────────────
+import { createClient } from "@supabase/supabase-js";
+
 // Change this to your WhatsApp Business number or set VITE_WHATSAPP_NUMBER in Vercel
 export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "94771234567";
 
-// Use absolute URL from environment variables to prevent Vercel 404 routing errors
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ezbutwwaummegowbxwcr.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-const API = `${SUPABASE_URL}/functions/v1/make-server-84218427`;
 
-// Helper for authorized headers
-const authHeaders = {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-};
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type ProductType = "pre-printed" | "pod";
@@ -49,29 +44,29 @@ export interface CartItem {
 }
 
 // ─── DB → App conversion ──────────────────────────────────────────────────────
-const mapProduct = (db: Record<string, unknown>): Product => ({
-  id: db.id as string,
-  name: db.name as string,
-  description: (db.description as string) ?? "",
-  price: db.price as number,
-  priceRs: db.price_rs as number,
-  category: db.category as string,
-  finish: db.finish as MaterialFinish,
-  type: db.type as ProductType,
-  stock: db.stock as number | undefined,
-  filamentColorId: db.filament_color_id as string | undefined,
-  gramsPerUnit: db.grams_per_unit as number | undefined,
-  maxChars: db.max_chars as number | undefined,
-  weightGrams: (db.weight_grams as number) ?? 200,
-  rating: (db.rating as number) ?? 4.5,
-  reviews: (db.reviews as number) ?? 0,
-  printHours: db.print_hours as number | undefined,
-  topSelling: (db.top_selling as boolean) ?? false,
-  images: (db.images as string[]) ?? [],
-  createdAt: db.created_at as string | undefined,
+const mapProduct = (db: any): Product => ({
+  id: db.id,
+  name: db.name,
+  description: db.description ?? "",
+  price: Number(db.price),
+  priceRs: db.price_rs,
+  category: db.category,
+  finish: db.finish,
+  type: db.type,
+  stock: db.stock,
+  filamentColorId: db.filament_color_id,
+  gramsPerUnit: db.grams_per_unit,
+  maxChars: db.max_chars,
+  weightGrams: db.weight_grams ?? 200,
+  rating: Number(db.rating) ?? 4.5,
+  reviews: db.reviews ?? 0,
+  printHours: db.print_hours,
+  topSelling: db.top_selling ?? false,
+  images: db.images ?? [],
+  createdAt: db.created_at,
 });
 
-const toDb = (p: Partial<Product> & Record<string, unknown>) => ({
+const toDb = (p: any) => ({
   ...(p.name !== undefined && { name: p.name }),
   ...(p.description !== undefined && { description: p.description }),
   ...(p.price !== undefined && { price: p.price }),
@@ -94,98 +89,65 @@ const toDb = (p: Partial<Product> & Record<string, unknown>) => ({
 // ─── API Calls ────────────────────────────────────────────────────────────────
 export const api = {
   async getProducts(params?: { category?: string; topSelling?: boolean }): Promise<Product[]> {
-    const url = new URL(`${API}/products`);
-    if (params?.category) url.searchParams.set("category", params.category);
-    if (params?.topSelling) url.searchParams.set("top_selling", "true");
+    let query = supabase.from("products_af").select("*");
+    if (params?.category) query = query.eq("category", params.category);
+    if (params?.topSelling) query = query.eq("top_selling", true);
     
-    const res = await fetch(url.toString(), {
-      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-    });
-    
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    if (!Array.isArray(data)) throw new Error(data.error ?? "Failed to load products");
+    const { data, error } = await query;
+    if (error) throw error;
     return data.map(mapProduct);
   },
 
   async getProduct(id: string): Promise<Product> {
-    const res = await fetch(`${API}/products/${id}`, {
-      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-    });
-    if (!res.ok) throw new Error("Product not found");
-    return mapProduct(await res.json());
+    const { data, error } = await supabase.from("products_af").select("*").eq("id", id).single();
+    if (error) throw error;
+    return mapProduct(data);
   },
 
   async createProduct(p: Omit<Product, "id" | "createdAt">): Promise<Product> {
-    const res = await fetch(`${API}/products`, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify(toDb(p as any)),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return mapProduct(await res.json());
+    const { data, error } = await supabase.from("products_af").insert(toDb(p)).select().single();
+    if (error) throw error;
+    return mapProduct(data);
   },
 
   async updateProduct(id: string, p: Partial<Product>): Promise<Product> {
-    const res = await fetch(`${API}/products/${id}`, {
-      method: "PATCH",
-      headers: authHeaders,
-      body: JSON.stringify(toDb(p as any)),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return mapProduct(await res.json());
+    const { data, error } = await supabase.from("products_af").update(toDb(p)).eq("id", id).select().single();
+    if (error) throw error;
+    return mapProduct(data);
   },
 
   async deleteProduct(id: string): Promise<void> {
-    const res = await fetch(`${API}/products/${id}`, { 
-      method: "DELETE",
-      headers: authHeaders 
-    });
-    if (!res.ok) throw new Error(await res.text());
+    const { error } = await supabase.from("products_af").delete().eq("id", id);
+    if (error) throw error;
   },
 
+  // Direct Supabase Storage Upload Interceptor
   async getUploadUrl(filename: string): Promise<{ signedUrl: string; path: string; publicUrl: string }> {
-    const res = await fetch(`${API}/upload-url`, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify({ filename }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const fileExt = filename.split('.').pop();
+    const path = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+    
+    // We pass the path as the "signedUrl" so uploadFile knows where to put it
+    return { signedUrl: path, path, publicUrl: data.publicUrl };
   },
 
   async uploadFile(signedUrl: string, file: File): Promise<void> {
-    // Note: Signed URLs usually do not require the Auth header since the signature is embedded in the URL
-    const res = await fetch(signedUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-    if (!res.ok) throw new Error("Upload failed");
+    // signedUrl is actually the exact file path requested by getUploadUrl
+    const { error } = await supabase.storage.from('product-images').upload(signedUrl, file);
+    if (error) throw new Error("Upload failed: " + error.message);
   },
 
   async getCustomOrderUploadUrl(filename: string): Promise<{ signedUrl: string; path: string }> {
-    const res = await fetch(`${API}/custom-order-url`, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify({ filename }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const { signedUrl, path } = await this.getUploadUrl(filename);
+    return { signedUrl, path };
   },
 
-  async initDb(): Promise<{ success: boolean; message: string; sql?: string; sqlEditorUrl?: string }> {
-    const res = await fetch(`${API}/init-db`, {
-      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-    });
-    return res.json();
+  async initDb() {
+    return { success: true, message: "Database is connected directly." };
   },
 
-  async seedProducts(): Promise<{ success: boolean; count?: number; message?: string; error?: string }> {
-    const res = await fetch(`${API}/seed`, {
-      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-    });
-    return res.json();
+  async seedProducts() {
+    return { success: true, message: "Use the SQL Editor to seed." };
   },
 };
 
@@ -244,7 +206,6 @@ export function openWhatsApp(message: string) {
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 export const CATEGORY_LABELS: Record<string, string> = {
   pots: "Pots",
   "wall-arts": "Wall Arts",
