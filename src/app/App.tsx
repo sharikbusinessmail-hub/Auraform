@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { HashRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import { Header } from "./components/store/Header";
 import { Hero } from "./components/store/Hero";
 import { ProductGrid } from "./components/store/ProductGrid";
@@ -304,6 +305,7 @@ export default function App() {
   return (
     <HashRouter>
       <AppContent />
+      <Analytics />
     </HashRouter>
   );
 }
