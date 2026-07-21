@@ -23,7 +23,7 @@ const slides: {
   secondary: Action;
 }[] = [
   {
-    src: "https://images.unsplash.com/photo-1776736851933-4a2ece025ec5?w=1800&h=1100&fit=crop&auto=format",
+    src: "https://ezbutwwaummegowbxwcr.supabase.co/storage/v1/object/public/caraousal/auraform%20anime%20caraousal.avif",
     badge: "New Arrivals · July 2026",
     title: "Bring your world to life — one layer at a time.",
     body: "Premium 3D printed home decor, figurines, and custom pieces. Made in Sri Lanka.",
@@ -33,7 +33,7 @@ const slides: {
     secondary: { kind: "custom" },
   },
   {
-    src: "https://images.unsplash.com/photo-1730267252256-67bee55353e8?w=1800&h=1100&fit=crop&auto=format",
+    src: "https://ezbutwwaummegowbxwcr.supabase.co/storage/v1/object/public/caraousal/potted%20plants%20caraousal.webp",
     badge: "Home Decors",
     title: "Geometric planters that grow with your space.",
     body: "Matte PLA, silk finishes, and resin — printed to order or ready to ship island-wide.",
@@ -43,7 +43,7 @@ const slides: {
     secondary: { kind: "shop-all" },
   },
   {
-    src: "https://images.unsplash.com/photo-1515155075601-23009d0cb6d4?w=1800&h=1100&fit=crop&auto=format",
+    src: "https://ezbutwwaummegowbxwcr.supabase.co/storage/v1/object/public/caraousal/3D%20printers.webp",
     badge: "Custom Design Service",
     title: "Your vision. Our printers. One perfect piece.",
     body: "Send us a sketch, photo, or idea — we model it, print it, and deliver to your door.",
