@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { HashRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Header } from "./components/store/Header";
 import { Hero } from "./components/store/Hero";
 import { ProductGrid } from "./components/store/ProductGrid";
@@ -48,7 +48,6 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [filter, setFilter] = useState<Filter | null>(null);
-  const [activeProduct, setActiveProduct] = useState<import("./lib/api").Product | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>(loadCart);
   const [cartOpen, setCartOpen] = useState(false);
   const productsRef = useRef<HTMLDivElement>(null);
@@ -76,7 +75,6 @@ function AppContent() {
       }
       return [...prev, item];
     });
-    setActiveProduct(null);
     setCartOpen(true);
   };
 
@@ -98,7 +96,6 @@ function AppContent() {
 
   const handleNavigate = (f: Filter | null) => {
     setFilter(f);
-    setActiveProduct(null);
     
     if (location.pathname !== "/") {
       navigate("/");
@@ -128,12 +125,78 @@ function AppContent() {
   };
 
   const handleCustomOrder = () => {
-    setActiveProduct(null);
     navigate("/custom-order");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const isAdminRoute = location.pathname.startsWith("/admin");
+
+  // Reusable footer component for multi-page consistency
+  const SiteFooter = () => (
+    <footer className="border-t border-border bg-white">
+      <div className="mx-auto max-w-[1400px] px-6 py-12">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
+                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+                  <line x1="12" y1="2" x2="12" y2="22" />
+                </svg>
+              </div>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: "18px" }}>
+                <span className="text-foreground">auraform</span><span className="text-accent">.lk</span>
+              </span>
+            </div>
+            <p className="mt-3 max-w-xs text-[13px] leading-[1.6] text-muted-foreground" style={{ fontFamily: "var(--font-body)" }}>
+              Premium 3D printed decor, figurines, and custom pieces. Made in Sri Lanka, delivered island-wide.
+            </p>
+            
+            {/* Direct Contact Details */}
+            <div className="mt-4 space-y-1.5 text-[13px] text-foreground/80" style={{ fontFamily: "var(--font-body)" }}>
+              <div className="flex items-center gap-2">
+                <span className="text-accent">✉</span>
+                <a href="mailto:auraformlk@gmail.com" className="transition hover:text-accent">
+                  auraformlk@gmail.com
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-accent">💬</span>
+                <a href="https://wa.me/94784262650" target="_blank" rel="noreferrer" className="transition hover:text-accent">
+                  +94 78 426 2650
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-16 gap-y-3">
+            {[
+              { label: "Home Decors", action: () => handleNavigate({ category: "pots" }) },
+              { label: "Key Tags", action: () => handleNavigate({ category: "key-tags" }) },
+              { label: "Figurines", action: () => handleNavigate({ category: "action-figures" }) },
+              { label: "Custom Orders", action: handleCustomOrder },
+              { label: "3D Modeling", action: handleCustomOrder },
+              { label: "Contact Us", action: () => window.open("https://wa.me/94784262650", "_blank") },
+            ].map(({ label, action }) => (
+              <button
+                key={label}
+                onClick={action}
+                className="text-left text-[13px] text-muted-foreground transition hover:text-accent"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
+          <span className="font-mono text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>
+            © 2026 auraform.lk · All rights reserved
+          </span>
+        </div>
+      </div>
+    </footer>
+  );
 
   return (
     <div className="min-h-screen bg-white text-foreground" style={{ fontFamily: "var(--font-body)" }}>
@@ -144,7 +207,7 @@ function AppContent() {
             <Header
               cartCount={cartCount}
               onNavigate={handleNavigate}
-              onEnterAdmin={() => {}} // Disabled navigation from header icon
+              onEnterAdmin={() => {}}
               onOpenCart={() => setCartOpen(true)}
               onCustomOrder={handleCustomOrder}
               onSearch={handleSearch}
@@ -170,7 +233,7 @@ function AppContent() {
             )}
 
             <div ref={productsRef}>
-              <ProductGrid filter={filter} onOpen={setActiveProduct} />
+              <ProductGrid filter={filter} />
             </div>
 
             {!filter && (
@@ -207,53 +270,23 @@ function AppContent() {
               </section>
             )}
 
-            <footer className="border-t border-border bg-white">
-              <div className="mx-auto max-w-[1400px] px-6 py-12">
-                <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
-                          <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
-                          <line x1="12" y1="2" x2="12" y2="22" />
-                        </svg>
-                      </div>
-                      <span style={{ fontFamily: "var(--font-display)", fontSize: "18px" }}>
-                        <span className="text-foreground">auraform</span><span className="text-accent">.lk</span>
-                      </span>
-                    </div>
-                    <p className="mt-3 max-w-xs text-[13px] leading-[1.6] text-muted-foreground" style={{ fontFamily: "var(--font-body)" }}>
-                      Premium 3D printed decor, figurines, and custom pieces. Made in Sri Lanka, delivered island-wide.
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-                    {[
-                      { label: "Home Decors", action: () => handleNavigate({ category: "pots" }) },
-                      { label: "Key Tags", action: () => handleNavigate({ category: "key-tags" }) }, // <-- Added here
-                      { label: "Figurines", action: () => handleNavigate({ category: "action-figures" }) },
-                      { label: "Custom Orders", action: handleCustomOrder },
-                      { label: "3D Modeling", action: handleCustomOrder },
-                      { label: "Contact", action: () => {} },
-                    ].map(({ label, action }) => (
-                      <button
-                        key={label}
-                        onClick={action}
-                        className="text-left text-[13px] text-muted-foreground transition hover:text-accent"
-                        style={{ fontFamily: "var(--font-body)" }}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
-                  <span className="font-mono text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>
-                    © 2026 auraform.lk · All rights reserved
-                  </span>
-                </div>
-              </div>
-            </footer>
+            <SiteFooter />
+            <FloatingActions />
+          </>
+        } />
 
+        <Route path="/product/:id" element={
+          <>
+            <Header
+              cartCount={cartCount}
+              onNavigate={handleNavigate}
+              onEnterAdmin={() => {}}
+              onOpenCart={() => setCartOpen(true)}
+              onCustomOrder={handleCustomOrder}
+              onSearch={handleSearch}
+            />
+            <ProductPage onAddToCart={addToCart} />
+            <SiteFooter />
             <FloatingActions />
           </>
         } />
@@ -263,12 +296,14 @@ function AppContent() {
             <Header
               cartCount={cartCount}
               onNavigate={handleNavigate}
-              onEnterAdmin={() => {}} // Disabled navigation from header icon
+              onEnterAdmin={() => {}}
               onOpenCart={() => setCartOpen(true)}
               onCustomOrder={handleCustomOrder}
               onSearch={handleSearch}
             />
             <CustomOrderPage onBack={() => navigate("/")} />
+            <SiteFooter />
+            <FloatingActions />
           </>
         } />
 
@@ -276,34 +311,23 @@ function AppContent() {
       </Routes>
 
       {!isAdminRoute && (
-        <>
-          {activeProduct && (
-            <ProductPage
-              product={activeProduct}
-              onClose={() => setActiveProduct(null)}
-              onAddToCart={addToCart}
-            />
-          )}
-
-          <CartDrawer
-            open={cartOpen}
-            items={cartItems}
-            onClose={() => setCartOpen(false)}
-            onUpdate={updateCartQty}
-            onRemove={removeFromCart}
-            onClear={clearCart}
-          />
-        </>
+        <CartDrawer
+          open={cartOpen}
+          items={cartItems}
+          onClose={() => setCartOpen(false)}
+          onUpdate={updateCartQty}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+        />
       )}
-
     </div>
   );
 }
 
 export default function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <AppContent />
-    </HashRouter>
+    </BrowserRouter>
   );
 }

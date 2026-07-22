@@ -1,23 +1,76 @@
-import { useRef, useState } from "react";
-import { X, Minus, Plus, Star, MessageCircle, ShoppingBag, Upload, FileText } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { X, Minus, Plus, Star, MessageCircle, ShoppingBag, Upload, FileText, Loader2 } from "lucide-react";
 import { api, openWhatsApp, buildWhatsAppMessage, FINISH_LABELS, FILAMENTS, type Product, type CartItem } from "../../lib/api";
 
 interface Props {
-  product: Product;
-  onClose: () => void;
   onAddToCart: (item: CartItem) => void;
 }
 
-export function ProductPage({ product, onClose, onAddToCart }: Props) {
+export function ProductPage({ onAddToCart }: Props) {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [text, setText] = useState("");
-  const [filamentId, setFilamentId] = useState(product.filamentColorId ?? FILAMENTS[0].id);
+  const [filamentId, setFilamentId] = useState(FILAMENTS[0].id);
   const [customFile, setCustomFile] = useState<File | null>(null);
   const [customFileUrl, setCustomFileUrl] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (!id) return;
+    
+    let cancelled = false;
+    setLoading(true);
+    
+    api.getProduct(id)
+      .then((p) => {
+        if (cancelled) return;
+        setProduct(p);
+        setFilamentId(p.filamentColorId ?? FILAMENTS[0].id);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message);
+        setLoading(false);
+      });
+      
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-white px-6 text-center">
+        <h2 className="text-[24px] text-foreground" style={{ fontFamily: "var(--font-display)" }}>Product not found</h2>
+        <p className="mt-2 text-[15px] text-muted-foreground" style={{ fontFamily: "var(--font-body)" }}>The requested product does not exist or has been removed.</p>
+        <button
+          onClick={() => navigate("/")}
+          className="mt-6 rounded-full bg-accent px-6 py-2.5 text-[12px] uppercase tracking-[0.2em] text-white"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Return Home
+        </button>
+      </div>
+    );
+  }
 
   const isPod = product.type === "pod";
   const podChars = product.maxChars ?? 20;
@@ -65,10 +118,10 @@ export function ProductPage({ product, onClose, onAddToCart }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-white" style={{ fontFamily: "var(--font-body)" }}>
-      <div className="mx-auto max-w-[1400px] px-6 py-8">
+    <div className="w-full bg-white" style={{ fontFamily: "var(--font-body)" }}>
+      <div className="mx-auto max-w-[1400px] px-6 py-12">
         <button
-          onClick={onClose}
+          onClick={() => navigate("/")}
           className="mb-8 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[12px] uppercase tracking-[0.2em] text-muted-foreground transition hover:border-foreground hover:text-foreground"
         >
           <X size={13} /> Back to shop

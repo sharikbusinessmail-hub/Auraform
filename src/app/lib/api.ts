@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 // Change this to your WhatsApp Business number or set VITE_WHATSAPP_NUMBER in Vercel
-export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "94771234567";
+export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "94784262650";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ezbutwwaummegowbxwcr.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";

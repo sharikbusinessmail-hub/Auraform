@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Star, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { api, type Product, CATEGORY_LABELS, FINISH_LABELS } from "../../lib/api";
 
 interface Props {
   filter: { category?: string; search?: string } | null;
-  onOpen: (p: Product) => void;
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -21,11 +21,11 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function ProductCard({ p, onOpen }: { p: Product; onOpen: (p: Product) => void }) {
+function ProductCard({ p }: { p: Product }) {
   return (
-    <button
-      onClick={() => onOpen(p)}
-      className="group overflow-hidden rounded-[6px] border border-border bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+    <Link
+      to={`/product/${p.id}`}
+      className="group block overflow-hidden rounded-[6px] border border-border bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
     >
       <div className="relative aspect-[4/4.2] overflow-hidden bg-muted">
         {p.images[0] ? (
@@ -86,7 +86,7 @@ function ProductCard({ p, onOpen }: { p: Product; onOpen: (p: Product) => void }
           </span>
         </div>
       </div>
-    </button>
+    </Link>
   );
 }
 
@@ -104,7 +104,7 @@ function SkeletonCard() {
   );
 }
 
-export function ProductGrid({ filter, onOpen }: Props) {
+export function ProductGrid({ filter }: Props) {
   const [tab, setTab] = useState<"featured" | "top-selling">("featured");
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,19 +114,17 @@ export function ProductGrid({ filter, onOpen }: Props) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    // When searching we fetch everything and filter client-side.
     const params = filter?.category && !filter?.search ? { category: filter.category } : undefined;
 
     (async () => {
       try {
         let data = await api.getProducts(params);
-        // Auto-seed on first load if the catalog is completely empty.
         if (data.length === 0 && !params) {
           try {
             await api.initDb();
             data = await api.getProducts(params);
           } catch {
-            /* init unavailable — leave empty */
+            // Error connecting
           }
         }
         if (!cancelled) setAllProducts(data);
@@ -166,7 +164,6 @@ export function ProductGrid({ filter, onOpen }: Props) {
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-[1400px] px-6">
-        {/* Section header */}
         <div className="mb-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-accent" style={{ fontFamily: "var(--font-body)" }}>
@@ -203,7 +200,6 @@ export function ProductGrid({ filter, onOpen }: Props) {
           )}
         </div>
 
-        {/* Error state */}
         {error && !loading && (
           <div className="mb-8 flex items-start gap-3 rounded-[6px] border border-orange-200 bg-orange-50 px-5 py-4">
             <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-orange-500" />
@@ -218,7 +214,6 @@ export function ProductGrid({ filter, onOpen }: Props) {
           </div>
         )}
 
-        {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -234,12 +229,11 @@ export function ProductGrid({ filter, onOpen }: Props) {
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {displayItems.map((p) => (
-              <ProductCard key={p.id} p={p} onOpen={onOpen} />
+              <ProductCard key={p.id} p={p} />
             ))}
           </div>
         )}
 
-        {/* CTA */}
         {!loading && displayItems.length > 0 && (
           <div className="mt-12 text-center">
             <button

@@ -47,9 +47,9 @@ const megaMenu = [
   {
     label: "Gifts",
     subs: [
-      { key: "Key Tags", label: "Key Tags" },
-      { key: "Lithophane Lamps", label: "Lithophane Lamps" },
-      { key: "Toys", label: "Toys" },
+      { key: "key-tags", label: "Key Tags" },
+      { key: "lithophane-lamps", label: "Lithophane Lamps" },
+      { key: "toys", label: "Toys" },
     ],
     image: "https://ezbutwwaummegowbxwcr.supabase.co/storage/v1/object/public/product-images/images%20(2).jpg",
     imageAlt: "3D printed key tags",
