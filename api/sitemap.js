@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     });
 
     const products = await response.json();
-    const baseUrl = 'https://auraform.lk';
+    const baseUrl = 'https://auraformlk.store'';
 
     // 2. Build the XML map dynamically
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

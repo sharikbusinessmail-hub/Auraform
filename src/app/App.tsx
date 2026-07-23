@@ -191,7 +191,7 @@ function AppContent() {
         </div>
         <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
           <span className="font-mono text-[11px] text-muted-foreground" style={{ fontFamily: "var(--font-mono)" }}>
-            © 2026 auraform.lk · All rights reserved
+            © 2026 auraformlk.store · All rights reserved
           </span>
         </div>
       </div>
